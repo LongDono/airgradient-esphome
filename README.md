@@ -10,4 +10,4 @@ To add your wifi SSID and password, either remove the "!secret" section and type
 your information so it is not hard coded into the device's file.
 
 ## Prometheus 
-This fork will be similar in appearance to my other repository: LongDono/airgradient-prometheus
+This fork will be similar in appearance to my other repository that uses Prometheus for data storage instead: LongDono/airgradient-prometheus
