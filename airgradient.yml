@@ -1,39 +1,67 @@
----
-# Instructions: https://esphome.io/guides/getting_started_hassio.html
+#=============================================================================
+# LongDono/AirGradient-HomeAssistant
+# You will need fonts in fonts/ from https://dejavu-fonts.github.io
+#
+# For help with ESPHome add-on setup in Home Assistant:
+# https://esphome.io/guides/getting_started_hassio.html
+
+#==[Configuration]============================================================
+
+substitutions:
+  code_name: airgradient-lower   # ex. airgradient-lower for a unit on lower level of home
+  nice_name: "AG Lower"          # ex. "AG Lower" for display in Home Assistant
+  comment: "Lower Level AirGradient Air Quality Unit"
+#   co2_available: "true"          # Set to false if SenseAir CO2 sensor not present
+  display_update: "3s"           # How often to update the display, default 3s
+
+#=============================================================================
+
 esphome:
-  name: airgradient
-  platform: ESP8266
+  name: ${code_name}
+  comment: ${comment}
+
+esp8266:
   board: d1_mini
 
 # Enable logging
 logger:
+  level: debug
 
-# Enable Home Assistant API
+# Enable the Home Assistant API
 api:
-  password: ""
 
+# Enable wireless ESPHome updates
 ota:
   password: ""
 
+# Set clock with Home Assistant
+time:
+  - platform: homeassistant
+
+# WiFi Configuration
+# https://esphome.io/components/wifi.html
 wifi:
-  # https://esphome.io/components/wifi.html
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  # Defaults to device name with no password
-  ap: {}
+  # Enable fallback hotspot (captive portal) in case WiFi connection fails
+  ap:
+    ssid: "${nice_name} Fallback"
+    # Password is optional
+#     password: "ix7tPFTuFDdV"
 captive_portal:
 
 # Configuration for AirGradient DIY v2 device
 # https://www.esphome-devices.com/devices/AirGradient-DIY/
 
+# https://esphome.io/components/uart.html#uart
 uart:
-  # https://esphome.io/components/uart.html#uart
+# SenseAir CO2 Sensor Configuration
+# Comment out this section if SenseAir CO2 Sensor is not present
   - rx_pin: D4
     tx_pin: D3
     baud_rate: 9600
     id: senseair_s8_uart
-
+# End of SenseAir CO2 Sensor Code
   - rx_pin: D5
     baud_rate: 9600
     id: pms5003_uart
@@ -42,26 +70,27 @@ i2c:
   sda: D2
   scl: D1
 
+# Particulate Matter Sensor Configuration
+# https://esphome.io/components/sensor/pmsx003.html?highlight=pms5003
 sensor:
   - platform: pmsx003
-    # https://esphome.io/components/sensor/pmsx003.html?highlight=pms5003
     type: PMSX003
     pm_1_0:
-      name: "Particulate Matter <1.0µm Concentration"
+      name: "${nice_name} PM <1.0µm"
       id: pm1
       filters:
         - sliding_window_moving_average:
             window_size: 30
             send_every: 30
     pm_2_5:
-      name: "Particulate Matter <2.5µm Concentration"
+      name: "${nice_name} PM <2.5µm"
       id: pm2
       filters:
         - sliding_window_moving_average:
             window_size: 30
             send_every: 30
     pm_10_0:
-      name: "Particulate Matter <10.0µm Concentration"
+      name: "${nice_name} PM <10.0µm"
       id: pm10
       filters:
         - sliding_window_moving_average:
@@ -69,56 +98,45 @@ sensor:
             send_every: 30
     uart_id: pms5003_uart
 
-
+# SenseAir CO₂ Sensor
+# https://esphome.io/components/sensor/senseair.html
+# Comment out this section if SenseAir CO2 Sensor is not present
   - platform: senseair
-    # https://esphome.io/components/sensor/senseair.html
     co2:
-      name: "SenseAir S8 CO2 Value"
+      name: "${nice_name} CO₂"
       id: co2
     update_interval: 30s
     uart_id: senseair_s8_uart
-
-
+# End of SenseAir CO2 Sensor Code
+# SHT3X-D Temperature+Humidity Sensor
+# https://esphome.io/components/sensor/sht3xd.html?highlight=sht31
   - platform: sht3xd
-    # https://esphome.io/components/sensor/sht3xd.html?highlight=sht31
     temperature:
-      name: "Temperature"
+      name: "${nice_name} Temperature"
       id: temp
     humidity:
-      name: "Humidity"
+      name: "${nice_name} Humidity"
       id: humidity
     address: 0x44
     update_interval: 30s
 
-
+# Wi-Fi Signal Quality
   - platform: wifi_signal
-    name: "WiFi Signal"
-    update_interval: 30s
+    name: "${nice_name} WiFi Signal"
     id: airgradient_wifi_signal
-
-
-  # - platform: sgp30
-  # # https://esphome.io/components/sensor/sgp30.html
-  # # Unable to get to work when OLED shield is connected
-  #   eco2:
-  #     name: "eCO2"
-  #     id: eco2
-  #     accuracy_decimals: 1
-  #   tvoc:
-  #     name: "TVOC"
-  #     id: tvoc
-  #     accuracy_decimals: 1
-  #   update_interval: 30s
-
-
+    update_interval: 30s
 
 font:
     # Font to use on the display
-    # Open Source font Liberation Sans by Red Hat
-    # https://www.dafont.com/liberation-sans.font
-  - file: './fonts/liberation_sans/LiberationSans-Regular.ttf'
-    id: font1
-    size: 24
+    # Open Source DejaVu fonts
+    # https://dejavu-fonts.github.io
+  - file: 'fonts/DejaVuSans.ttf'
+    id: regular
+    size: 15
+    glyphs: ' !"%()+,-.:/0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz°₂₅'
+  - file: 'fonts/DejaVuSans-Bold.ttf'
+    id: bold
+    size: 26
 
 display:
   - platform: ssd1306_i2c
@@ -131,61 +149,41 @@ display:
     pages:
       - id: display_pm2
         lambda: |-
-          it.print(0, 0, id(font1), "PM2");
-          it.printf(64, 24, id(font1), TextAlign::TOP_RIGHT, "%.0f",id(pm2).state);
+          it.print(32, 0, id(regular), TextAlign::TOP_CENTER, "PM₂.₅");
+          it.printf(32, 48, id(bold), TextAlign::BOTTOM_CENTER, "%.0f",id(pm2).state);
+# Comment out this section if SenseAir CO2 Sensor is not present
       - id: display_co2
         lambda: |-
-          it.print(0, 0, id(font1), "CO2");
-          it.printf(64, 24, id(font1), TextAlign::TOP_RIGHT, "%.0f",id(co2).state);
-      # - id: display_temp
-      #   lambda: |-
-      #     it.print(0, 0, id(font1), "°C");
-      #     it.printf(64, 24, id(font1), TextAlign::TOP_RIGHT, "%.1f",id(temp).state);
-      - id: display_tempf
+          it.print(32, 0, id(regular), TextAlign::TOP_CENTER, "CO₂");
+          it.printf(32, 48, id(bold), TextAlign::BOTTOM_CENTER, "%.0f",id(co2).state);
+# End of SenseAir CO2 Sensor Code
+      - id: display_temp
         lambda: |-
-          it.print(0, 0, id(font1), "°F");
-          it.printf(64, 24, id(font1), TextAlign::TOP_RIGHT, "%.1f",id(temp).state*9/5+32);
+          it.print(32, 0, id(regular), TextAlign::TOP_CENTER, "Temp °C");
+          it.printf(32, 48, id(bold), TextAlign::BOTTOM_CENTER, "%.1f",id(temp).state);
+      # - id: display_tempf
+      #   lambda: |-
+      #     it.print(32, 0, id(regular), TextAlign::TOP_CENTER, "Temp °F");
+      #     it.printf(32, 48, id(bold), TextAlign::BOTTOM_CENTER, "%.1f",id(temp).state*9/5+32);
       - id: display_humidity
         lambda: |-
-          it.print(0, 0, id(font1), "HUM");
-          it.printf(64, 24, id(font1), TextAlign::TOP_RIGHT, "%.0f%%",id(humidity).state);
+          it.print(32, 0, id(regular), TextAlign::TOP_CENTER, "Humidity");
+          it.printf(32, 48, id(bold), TextAlign::BOTTOM_CENTER, "%.0f%%",id(humidity).state);
       # - id: display_eco2
       #   lambda: |-
-      #     it.print(0, 0, id(font1), "eCO2");
-      #     it.printf(64, 24, id(font1), TextAlign::TOP_RIGHT, "%.0f",id(eco2).state);
+      #     it.print(32, 0, id(regular), TextAlign::TOP_CENTER, "CO₂");
+      #     it.printf(32, 48, id(bold), TextAlign::BOTTOM_CENTER, "%.0f",id(eco2).state);
       # - id: display_tvoc
       #   lambda: |-
-      #     it.print(0, 0, id(font1), "TVOC");
-      #     it.printf(64, 24, id(font1), TextAlign::TOP_RIGHT, "%.0f",id(tvoc).state);
-
-
-http_request:
-  # Used to support POST request to send data to AirGradient
-  # https://esphome.io/components/http_request.html
-
+      #     it.print(32, 0, id(regular), TextAlign::TOP_CENTER, "TVOC");
+      #     it.printf(32, 48, id(bold), TextAlign::BOTTOM_CENTER, "%.0f",id(tvoc).state);
+      # - id: display_status
+      #   lambda: |-
+      #     it.printf(0, 0, id(regular),"%s", id(esp_ip).state.c_str()); 
 
 interval:
-  - interval: 3s
-    # Cycle through page on display
+  # Cycle through page on display
+  - interval: ${display_update}
     then:
       - display.page.show_next: oled_display
       - component.update: oled_display
-
-  - interval: 60s
-    # Send data to AirGradient API server
-    then:
-      - http_request.post:
-          # AirGradient URL with the last 3 bytes of the MAC address in Hex format all lower case
-          url: !lambda |-
-            return "http://hw.airgradient.com/sensors/airgradient:" + get_mac_address().substr(6,11) + "/measures";
-          headers:
-              Content-Type: application/json
-          # "!lambda return to_string(id(pm2).state);" Converts sensor output from double to string
-          json:
-            wifi: id(airgradient_wifi_signal).state
-            pm02: !lambda return to_string(id(pm2).state);
-            rco2: !lambda return to_string(id(co2).state);
-            atmp: !lambda return to_string(id(temp).state);
-            rhum: !lambda return to_string(id(humidity).state);
-            # tvoc: !lambda return to_string(id(tvoc).state);
-          verify_ssl: false
