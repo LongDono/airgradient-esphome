@@ -1,5 +1,7 @@
-# AirGradient-ESPHome
-An ESPHome configuration for the AirGradient DIY Air Quality Sensor to send air quality data directly to Home Assistant. This fork's display will be similar to [LongDono/airgradient-prometheus](https://github.com/LongDono/airgradient-prometheus), which uses Prometheus/Grafana instead of ESPHome/Home Assistant.
+# AirGradient-ESPHome: First commit
+An ESPHome configuration for the AirGradient DIY Air Quality Sensor to send air quality data directly to Home Assistant. While I have another AirGradient repository that I used initially, [LongDono/airgradient-prometheus](https://github.com/LongDono/airgradient-prometheus), this fork only supports Home Assistant and features a significantly changed display to try to make better use of that 0.96" OLED.
+
+Currently, you will have to edit the code to enable/disable features while I learn more about ESPHome. :)
 
 ## Configuration
 If all original sensors (PMS5003, Senseair S8, SHT3x) are connected, airgradient.yml should be fully ready
