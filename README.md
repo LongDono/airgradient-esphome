@@ -3,7 +3,7 @@ An ESPHome configuration for the AirGradient DIY Air Quality Sensor to send air 
 
 Currently, you will have to edit the code to enable/disable features while I learn more about ESPHome. :)
 
-## Configuration
+## Pre-Fork Configuration Notes
 If all original sensors (PMS5003, Senseair S8, SHT3x) are connected, airgradient.yml should be fully ready
 If some sensors are not installed, comment or remove the associated sections in sensor: and display: and http_request.post:
 Commented code supports TVOC readings from SGP30 sensor, but in testing, it required being connected to 3.3v instead of 5v as wired on the AirGradient board.  Also does not appear to work if the OLED display is connected, but works if display is physically removed.
